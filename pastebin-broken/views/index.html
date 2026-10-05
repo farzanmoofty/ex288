@@ -1,54 +1,3 @@
-# Create local project inside the vm you are utilizing for the cluster 
-mkdir -p ~/pastebin-broken
-cd ~/pastebin-broken
-
-# Create package.json (BROKEN - missing comma on line 3)
-cat > package.json <<'EOF'
-{
-  "name": "pastebin",
-  "version": "1.0.0"
-  "description": "Simple pastebin app",
-  "main": "server.js",
-  "dependencies": {
-    "express": "^4.18.0",
-    "body-parser": "^1.20.0"
-  },
-  "scripts": {
-    "start": "node server.js"
-  }
-}
-EOF
-
-# Create server.js
-cat > server.js <<'EOF'
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
-const PORT = 8080;
-
-let pastes = [];
-
-app.use(bodyParser.json());
-app.use(express.static('views'));
-
-app.get('/api/pastes', (req, res) => {
-  res.json(pastes);
-});
-
-app.post('/api/paste', (req, res) => {
-  const { text } = req.body;
-  pastes.push({ id: pastes.length + 1, text });
-  res.json({ success: true, id: pastes.length });
-});
-
-app.listen(PORT, () => {
-  console.log(`Pastebin running on port ${PORT}`);
-});
-EOF
-
-# Create views directory and HTML
-mkdir views
-cat > views/index.html <<'EOF'
 <!DOCTYPE html>
 <html>
 <head>
@@ -93,5 +42,3 @@ cat > views/index.html <<'EOF'
   </script>
 </body>
 </html>
-EOF
-
