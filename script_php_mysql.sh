@@ -1,0 +1,151 @@
+#!/bin/bash
+
+mkdir -p materials
+cat > materials/php-app.yaml <<'EOF'
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: "wrong-label"
+  app: "php-application"
+metadata:
+  name: ex288-php-mysql
+  labels:
+    template: "wrong-label"
+  annotations:
+    openshift.io/display-name: "PHP + MySQL (Persistent)"
+    description: "A simple two-tier application to demonstrate a CI/CD pipeline from scratch."
+    tags: "quickstart,php"
+    iconClass: "icon-php"
+    openshift.io/long-description: "This template defines resources for a LAMP application, including a build configuration, application deployment configuration, and database deployment configuration with persistent storage."
+parameters:
+  - name: NAME
+    displayName: Name
+    description: The name assigned to all of the frontend objects
+    required: false
+    value: lamp-app
+  - name: HELLO_AUDIENCE
+    displayName: Greeting Audience
+    description: Who should we greet?
+    required: false
+    value: Engineers
+  - name: HELLO_MESSAGE
+    displayName: Greeting Message
+    description: The greeting message
+    required: false
+    value: Bonjour
+  - name: NAMESPACE
+    displayName: Namespace
+    description: The OpenShift Namespace where the ImageStream resides
+    required: false
+    value: openshift
+  - name: APPLICATION_DOMAIN
+    displayName: Application Hostname
+    description: The exposed hostname that will route to the PHP service
+    required: false
+  - name: SOURCE_REPOSITORY_URL
+    displayName: Git Repository URL
+    description: The URL of the repository with your application source code
+    required: false
+    value: https://git.ocp4.example.com/developer/php-greeting-app.git
+  - name: SOURCE_REPOSITORY_REF
+    displayName: Git Reference
+    description: Set this to a branch name, tag or other ref of your repository
+    value: main
+  - name: CONTEXT_DIR
+    displayName: Context Directory
+    description: Set this to the relative path to your project if it is not in the root
+  - name: PHP_VERSION
+    displayName: PHP Version
+    description: Version of PHP to be used
+    required: false
+    value: "7.4-ubi8"
+objects:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${NAME}
+      annotations:
+        description: Exposes and load balances the application pods
+    spec:
+      ports:
+        - name: web
+          port: 8080
+          targetPort: 8080
+      selector:
+        name: ${NAME}
+  - apiVersion: route.openshift.io/v1
+    kind: Route
+    metadata:
+      name: ${NAME}
+    spec:
+      host: ${APPLICATION_DOMAIN}
+      to:
+        kind: Service
+        name: ${NAME}
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: ${NAME}
+      annotations:
+        description: Keeps track of changes in the application image
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: ${NAME}
+      annotations:
+        description: Defines how to build the application
+        template.alpha.openshift.io/wait-for-ready: "true"
+    spec:
+      source:
+        type: Git
+        git:
+          uri: ${SOURCE_REPOSITORY_URL}
+          ref: ${SOURCE_REPOSITORY_REF}
+        contextDir: ${CONTEXT_DIR}
+      strategy:
+        type: Source
+        sourceStrategy:
+          from:
+            kind: ImageStreamTag
+            namespace: ${NAMESPACE}
+            name: php:${PHP_VERSION}
+          env:
+            - name: HELLO_MESSAGE
+              value: ${HELLO_MESSAGE}
+            - name: HELLO_AUDIENCE
+              value: ${HELLO_AUDIENCE}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${NAME}:latest
+      triggers:
+        - type: ImageChange
+        - type: ConfigChange
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${NAME}
+      annotations:
+        description: Defines how to deploy the application
+        template.alpha.openshift.io/wait-for-ready: "true"
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          name: ${NAME}
+      template:
+        metadata:
+          labels:
+            name: ${NAME}
+        spec:
+          containers:
+            - name: php-app
+              image: image-registry.openshift-image-registry.svc:5000/indy/${NAME}:latest
+              ports:
+                - containerPort: 8080
+              env:
+                - name: HELLO_MESSAGE
+                  value: ${HELLO_MESSAGE}
+                - name: HELLO_AUDIENCE
+                  value: ${HELLO_AUDIENCE}
+EOF

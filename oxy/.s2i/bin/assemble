@@ -1,0 +1,10 @@
+#!/bin/bash
+# This is the default assemble script
+# It does NOT copy HTML files or generate info.html yet
+
+echo "Running default assemble script..."
+
+# Source the default assemble from the builder image
+if [ -f /usr/libexec/s2i/assemble ]; then
+  /usr/libexec/s2i/assemble
+fi
