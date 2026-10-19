@@ -1,0 +1,12 @@
+{
+  "name": "exam-api",
+  "version": "1.0.0",
+  "description": "Simple API for EX288 Helm exercise",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": ["api", "exam"],
+  "author": "Student",
+  "license": "MIT"
+}

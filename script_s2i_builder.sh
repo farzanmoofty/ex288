@@ -1,3 +1,9 @@
+#!/bin/bash
+
+mkdir -p oxy/.s2i/bin
+cd oxy
+
+
 cat > index.html <<'EOF'
 <!DOCTYPE html>
 <html>
@@ -10,7 +16,7 @@ cat > index.html <<'EOF'
 </html>
 EOF
 
-cat > .s2i/bin/assemble <<'EOF'
+cat > .s2i/bin/assemble << EOF
 #!/bin/bash
 # This is the default assemble script
 # It does NOT copy HTML files or generate info.html yet
@@ -22,5 +28,5 @@ if [ -f /usr/libexec/s2i/assemble ]; then
   /usr/libexec/s2i/assemble
 fi
 EOF
-
-chmod +x .s2i/bin/assemble
+cd ..
+chmod +x oxy/.s2i/bin/assemble
